@@ -29,7 +29,7 @@ python setup.py install
 
 ## MicroCorpus-260K
 
-The **MicroCorpus-260K** dataset includes 263,302 microbiome samples sourced from MGnify, ideal for training your own MGM model. It is available for download on [OneDrive](https://1drv.ms/f/c/18d7815ed643fcef/EhpVq8yLORVImPIqpsFtHa4BrllBymIa-OWc7jS2vyADzw?e=AzZiLf) (replace with the actual link). The dataset includes:
+The **MicroCorpus-260K** dataset includes 263,302 microbiome samples sourced from MGnify, ideal for training your own MGM model. It is available for download on [OneDrive](https://1drv.ms/f/c/18d7815ed643fcef/EhpVq8yLORVImPIqpsFtHa4BrllBymIa-OWc7jS2vyADzw?e=AzZiLf). The dataset includes:
 
 - **`MicroCorpus-260K.pkl`**: Normalized microbiome corpus (mean and standard deviation across all samples).
 - **`MicroCorpus-260K_unnorm.pkl`**: Unnormalized microbiome corpus.
