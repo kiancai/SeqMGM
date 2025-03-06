@@ -1,137 +1,196 @@
+**English**| [中文](README_zh.md)
 # MGM
 [![](https://img.shields.io/pypi/v/microformer-mgm)](https://pypi.org/project/microformer-mgm/) 
 [![Downloads](https://pepy.tech/badge/microformer-mgm)](https://pepy.tech/project/microformer-mgm)
 ![](https://img.shields.io/badge/status-beta-yellow?style=flat) 
 ![](https://img.shields.io/github/license/HUST-NingKang-Lab/MGM?style=flat) 
 
-**Microbial General Model (MGM)** is a large-scale pretrained language model designed for interpretable microbiome data analysis. MGM allows for fine-tuning and evaluation across various microbiome data analysis tasks.
+**Microbial General Model (MGM)** is a large-scale pretrained language model designed for interpretable microbiome data analysis. MGM supports a variety of tasks, including data preparation, model training, and inference, making it a versatile tool for microbiome research.
 
 ![MGM Pipeline](pipeline.png)
 
 ## Installation
 
-### By pip
+### From PyPI
+
+Install MGM using pip:
 
 ```bash
 pip install microformer-mgm
 ```
 
-### By source
-Install the MGM package using `setup.py`:
+### From Source
+
+Install MGM from the source code:
 
 ```bash
 python setup.py install
 ```
 
+## MicroCorpus-260K
+
+The **MicroCorpus-260K** dataset includes 263,302 microbiome samples sourced from MGnify, ideal for training your own MGM model. It is available for download on [OneDrive](https://1drv.ms/f/c/18d7815ed643fcef/EhpVq8yLORVImPIqpsFtHa4BrllBymIa-OWc7jS2vyADzw?e=AzZiLf) (replace with the actual link). The dataset includes:
+
+- **`MicroCorpus-260K.pkl`**: Normalized microbiome corpus (mean and standard deviation across all samples).
+- **`MicroCorpus-260K_unnorm.pkl`**: Unnormalized microbiome corpus.
+- **`mgnify_biomes.csv`**: Metadata for the samples in the dataset.
+
+### Loading MicroCorpus-260K
+
+Load the dataset in Python:
+
+```python
+from pickle import load
+corpus = load(open('MicroCorpus-260K.pkl', 'rb'))
+corpus[0]  # Access the first sample (dict with input_ids and attention_mask)
+abundance = corpus.data  # Access the abundance data
+```
+
 ## Usage
 
-MGM can be utilized via the command line interface (CLI) with different modes. The general syntax is:
+MGM is accessed via a command-line interface (CLI) with various modes. The general syntax is:
 
 ```bash
 mgm <mode> [options]
 ```
 
-### Available Modes
+Below, the modes are grouped into **Data Preparation**, **Model Training**, and **Inference** for better organization.
+
+### Data Preparation
 
 #### `construct`
-Converts input abundance data to a count matrix at the Genus level, normalizes it using phylogeny, and constructs a microbiome corpus. The corpus represents each sample as a sentence from high rank genus to low rank genus.
 
-**Input:** Data in hdf5, csv, or tsv format (features in rows, samples in columns)  
-**Output:** A pkl file containing the microbiome corpus
+Converts abundance data into a microbiome corpus, normalized using phylogeny, and ranked from high to low genus abundance.
+
+- **Input:** Abundance data in `hdf5`, `csv`, or `tsv` format (features in rows, samples in columns)
+- **Output:** A `.pkl` file containing the microbiome corpus
 
 **Example:**
 
 ```bash
-mgm construct -i infant_data/abundance.csv -o infant_corpus.pkl
+mgm construct -i data/abundance.csv -o data/corpus.pkl
 ```
 
-> For hdf5 files, specify the key using `-k` (default key is `genus`).
+> **Note:** For `hdf5` files, use `-k` to specify the key (default is `genus`).
+
+### Model Training
 
 #### `pretrain`
-Pretrains the MGM model using the microbiome corpus by causal language modeling. Optionally, you can train the generator by providing a label file. If the label file is provided, the tokenized label will be added following the \<bos> token, meanwhile, the tokenizer will be updated and the model's embedding layer will be expanded.
 
-**Input:** Corpus from `construct` mode  
-**Output:** Pretrained MGM model
+Pretrains the MGM model using causal language modeling on a microbiome corpus. Optionally, trains a generator with labeled data.
+
+- **Input:** 
+  - Microbiome corpus (`.pkl`)
+  - Optional: Label file (`.csv`, two columns: sample ID and label)
+- **Output:** Pretrained MGM model
 
 **Examples:**
 
 ```bash
-mgm pretrain -i infant_corpus.pkl -o infant_model
-mgm pretrain -i infant_corpus.pkl -l infant_data/meta_withbirth.csv -o infant_model_gen --with-label
+mgm pretrain -i data/corpus.pkl -o models/pretrained_model
+mgm pretrain -i data/corpus.pkl -l data/labels.csv -o models/generator_model --with-label
 ```
 
-> Use `--from-scratch` to train the model from scratch instead of loading pretrained weights.
+> **Note:** Use `--from-scratch` to train from scratch instead of loading pretrained weights. If a label file is provided, the tokenizer and model embedding layer are updated.
 
 #### `train`
-Trains a supervised MGM model from sratch, requiring labeled data.
 
-**Input:** Corpus from `construct` mode, label file (csv)  
-**Output:** Supervised MGM model
+Trains a supervised MGM model from scratch using labeled data.
+
+- **Input:** 
+  - Microbiome corpus (`.pkl`)
+  - Label file (`.csv`, two columns: sample ID and label)
+- **Output:** Supervised MGM model
 
 **Example:**
 
 ```bash
-mgm train -i infant_corpus.pkl -l infant_data/meta_withbirth.csv -o infant_model_clf
+mgm train -i data/corpus.pkl -l data/labels.csv -o models/supervised_model
 ```
 
 #### `finetune`
-Finetunes the MGM model with pre-trained weight to fit a new task, using labeled data and optionally a customized MGM model. If no model is specified, the model pretrained on MicroCorpus-260K will be used.
 
+Finetunes a pretrained MGM model for a specific task using labeled data.
 
-**Input:** Corpus from `construct` mode, label file (csv), pretrained model (optional)  
-**Output:** Finetuned MGM model
+- **Input:** 
+  - Microbiome corpus (`.pkl`)
+  - Label file (`.csv`, two columns: sample ID and label)
+  - Optional: Pretrained model (defaults to MicroCorpus-260K pretrained model if not specified)
+- **Output:** Finetuned MGM model
 
 **Example:**
 
 ```bash
-mgm finetune -i infant_corpus.pkl -l infant_data/meta_withbirth.csv -m infant_model -o infant_model_clf_finetune
+mgm finetune -i data/corpus.pkl -l data/labels.csv -m models/pretrained_model -o models/finetuned_model
 ```
+
+### Inference
 
 #### `predict`
-Predicts labels of input data using a fine-tuned MGM model. If a label file is provided, prediction results will be compared with the ground truth using various metrics.
 
-**Input:** Corpus from `construct` mode, label file (optional), supervised MGM model  
-**Output:** Prediction results in csv format
+Generates predictions using a finetuned MGM model. Optionally evaluates against ground truth labels.
+
+- **Input:** 
+  - Microbiome corpus (`.pkl`)
+  - Optional: Label file (`.csv`) for evaluation
+  - Supervised MGM model
+- **Output:** Prediction results (`.csv`)
 
 **Example:**
 
 ```bash
-mgm predict -E -i infant_corpus.pkl -l infant_data/meta_withbirth.csv -m infant_model_clf -o infant_prediction.csv
+mgm predict -E -i data/corpus.pkl -l data/labels.csv -m models/finetuned_model -o data/predictions.csv
 ```
+
+> **Note:** Use `-E` with a label file to compare predictions with ground truth.
 
 #### `generate`
-Generates synthetic microbiome data using the pretrained MGM model. A prompt file is required for generating samples with specific labels.
 
-**Input:** Pretrained MGM model  
-**Output:** Synthetic genus tensors in pickle format
+Generates synthetic microbiome data using a pretrained MGM model.
+
+- **Input:** 
+  - Pretrained MGM model
+  - Optional: Prompt file (`.txt`, one label per line) for labeled generation
+- **Output:** Synthetic genus tensors (`.pkl`)
 
 **Example:**
 
 ```bash
-mgm generate -m infant_model_gen -p infant_data/prompt.txt -n 100 -o infant_synthetic.pkl
+mgm generate -m models/generator_model -p data/prompt.txt -n 100 -o data/synthetic.pkl
 ```
+
+> **Note:** Use `-n` to specify the number of samples to generate.
 
 #### `reconstruct`
-Reconstruct abundance from ranked corpus. 
-                                        
-**Input:**  Abundance file for train reconstructor or trained model in ckpt; Ranked corpus for reconstruct; Get label's tokenizer in generator if there is; Prompt if there is label in corpus
 
-**Output:**  Reconstructed corpus ; Reconstructor model; Decoded label
+Reconstructs abundance data from a ranked corpus, with optional training of a reconstructor model or label decoding.
+
+- **Input:** 
+  - Abundance file (e.g., `csv`) for training the reconstructor, or a trained model checkpoint.
+  - Ranked corpus (`.pkl`) for reconstruction
+  - Optional: Generator model and prompt file (text, one label per line) for labeled data
+- **Output:** 
+  - Reconstructed corpus (`.pkl`)
+  - Reconstructor model (if training)
+  - Decoded labels (if applicable)
+
+**Examples:**
 
 ```bash
-mgm reconstruct -a infant_data/abundance.csv -i infant_synthetic.pkl -g infant_model_generate -w True -o reconstructor_file 
-mgm reconstruct -r reconstructor_file/reconstructor_model.ckpt -i infant_synthetic.pkl -g infant_model_generate -w True -o reconstructor_file 
+mgm reconstruct -a data/abundance.csv -i data/synthetic.pkl -g models/generator_model -w True -o data/reconstructor
+mgm reconstruct -r data/reconstructor_model.ckpt -i data/synthetic.pkl -g models/generator_model -w True -o data/reconstructed
 ```
 
-For detailed usage of each mode, refer to the help message:
+For more details on any mode, run:
 
 ```bash
 mgm <mode> --help
 ```
 
 ## Maintainers
-| Name | Email | Organization |
-| ---- | ----- | ------------ |
-|Haohong Zhang|[haohongzh@gmail.com](mailto:haohongzh@gmail.com)|PhD Student, School of Life Science and Technology, Huazhong University of Science & Technology|
-|Zixin Kang| [29590kang@gmail.com](mailto:29590kang@gmail.com)| Undergraduate, School of Life Science and Technology, Huazhong University of Science & Technology|
-|Kang Ning  | [ningkang@hust.edu.cn](mailto:ningkang@hust.edu.cn)       | Professor, School of Life Science and Technology, Huazhong University of Science & Technology |
+
+| Name          | Email                     | Organization                                             |
+|---------------|---------------------------|----------------------------------------------------------|
+| Haohong Zhang | [haohongzh@gmail.com](mailto:haohongzh@gmail.com)       | PhD Student, School of Life Science and Technology, HUST |
+| Zixin Kang    | [29590kang@gmail.com](mailto:29590kang@gmail.com)       | Undergraduate, School of Life Science and Technology, HUST |
+| Kang Ning     | [ningkang@hust.edu.cn](mailto:ningkang@hust.edu.cn)      | Professor, School of Life Science and Technology, HUST   |
