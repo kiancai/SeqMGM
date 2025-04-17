@@ -46,7 +46,17 @@ corpus[0]  # Access the first sample (dict with input_ids and attention_mask)
 abundance = corpus.data  # Access the abundance data
 ```
 
-## Usage
+## Example Notebook
+
+The [MGM_Interpretability_Guideline.ipynb](MGM_Interpretability_Guideline.ipynb) Jupyter Notebook provides a comprehensive guide for using MGM to perform interpretable microbiome analysis. It demonstrates how to:
+
+* Fine-tune MGM on an infant microbiome dataset.
+* Extract sample embeddings for visualization.
+* Compute attention weights to identify keystone microbial genera.
+
+This notebook is ideal for researchers seeking to understand MGM's interpretability features and apply them to their own datasets.
+
+## CLI Usage
 
 MGM is accessed via a command-line interface (CLI) with various modes. The general syntax is:
 
