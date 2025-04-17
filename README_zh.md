@@ -49,6 +49,17 @@ corpus[0]  # 访问第一个样本（包含 input_ids 和 attention_mask 的字�
 abundance = corpus.data  # 访问丰度数据
 ```
 
+## 示例笔记本
+
+[mgm_interpretability_guideline.ipynb]（mgm_interpretability_guideline.ipynb）jupyter Notebook提供了一份全面的指南，用于使用MGM执行可解释的微生物组分析。它演示了如何：
+
+*在婴儿微生物组数据集上微调MGM。
+*提取样本嵌入以进行可视化。
+*计算注意力重量以识别Keystone微生物属。
+
+本笔记本适合寻求MGM的可解释性功能并将其应用于自己的数据集。
+
+
 ## 使用方法
 
 MGM 通过命令行界面 (CLI) 访问，提供多种模式。一般语法为：
